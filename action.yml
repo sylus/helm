@@ -1,6 +1,6 @@
 name: Deliverybot Helm Action
 description: Deploys a helm chart
-author: deliverybot
+author: sylus
 icon: box
 color: gray-dark
 inputs:
@@ -8,6 +8,8 @@ inputs:
     description: Helm release name. Will be combined with track if set. (required)
   namespace:
     description: Kubernetes namespace name. (required)
+  tiller-namespace:
+    description: Kubernetes tiller-namespace name.
   chart:
     description: Helm chart path. If set to "app" this will use the built in helm
       chart found in this repository. (required)

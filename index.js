@@ -136,13 +136,14 @@ function renderFiles(files, data) {
  *
  * @param {string} helm
  * @param {string} namespace
+ * @param {string} tillerNamespace
  * @param {string} release
  */
-function deleteCmd(helm, namespace, release) {
+function deleteCmd(helm, namespace, tillerNamespace, release) {
   if (helm === "helm3") {
     return ["delete", "-n", namespace, release];
   }
-  return ["delete", "--purge", release];
+  return ["delete", "--tiller-namespace", tillerNamespace, "--purge", release];
 }
 
 /**
@@ -157,6 +158,7 @@ async function run() {
     const appName = getInput("release", required);
     const release = releaseName(appName, track);
     const namespace = getInput("namespace", required);
+    const tillerNamespace = getInput("tiller-namespace") || "kube-system";
     const chart = chartName(getInput("chart", required));
     const chartVersion = getInput("chart_version");
     const values = getValues(getInput("values"));
@@ -174,6 +176,7 @@ async function run() {
     core.debug(`param: release = "${release}"`);
     core.debug(`param: appName = "${appName}"`);
     core.debug(`param: namespace = "${namespace}"`);
+    core.debug(`param: tillerNamespace = "${tillerNamespace}"`);
     core.debug(`param: chart = "${chart}"`);
     core.debug(`param: chart_version = "${chartVersion}"`);
     core.debug(`param: values = "${values}"`);
@@ -199,6 +202,7 @@ async function run() {
       "--wait",
       "--atomic",
       `--namespace=${namespace}`,
+      `--tiller-namespace=${tillerNamespace}`,
       '--home=/root/.helm/',
     ];
 
@@ -236,7 +240,7 @@ async function run() {
     // Remove the canary deployment before continuing.
     if (removeCanary) {
       core.debug(`removing canary ${appName}-canary`);
-      await exec.exec(helm, deleteCmd(helm, namespace, `${appName}-canary`), {
+      await exec.exec(helm, deleteCmd(helm, namespace, tillerNamespace, `${appName}-canary`), {
         ...opts,
         ignoreReturnCode: true
       });
@@ -244,7 +248,7 @@ async function run() {
 
     // Actually execute the deployment here.
     if (task === "remove") {
-      await exec.exec(helm, deleteCmd(helm, namespace, release), {
+      await exec.exec(helm, deleteCmd(helm, namespace, tillerNamespace, release), {
         ...opts,
         ignoreReturnCode: true
       });
